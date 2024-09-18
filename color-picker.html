@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    .color-picker {
+      max-width: 250px;
+    }
+
+    .color-picker-preview {
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="color-picker" data-value="#34567899">
+    #<input type="text" class="color-picker-text">
+    <input type="range" class="color-picker-red" data-color="0" min="0" max="255">
+    <input type="range" class="color-picker-blue" data-color="1" min="0" max="255">
+    <input type="range" class="color-picker-green" data-color="2" min="0" max="255">
+    <input type="range" class="color-picker-transparency" data-color="3" min="0" max="255">
+    <div class="color-picker-preview"></div>
+  </div>
+  <div class="color-picker" data-value="#99567834">
+    #<input type="text" class="color-picker-text">
+    <input type="range" class="color-picker-red" data-color="0" min="0" max="255">
+    <input type="range" class="color-picker-blue" data-color="1" min="0" max="255">
+    <input type="range" class="color-picker-green" data-color="2" min="0" max="255">
+    <input type="range" class="color-picker-transparency" data-color="3" min="0" max="255">
+    <div class="color-picker-preview"></div>
+  </div>
+  <script>
+    const colorPickers = document.querySelectorAll('.color-picker');
+
+    function getColorFractions(color) {
+      return color.split('').reduce((all, item) => {
+        if (all.length > 0 && (all[all.length - 1].length === 1)) {
+          all[all.length - 1] += item;
+        } else {
+          all.push(item);
+        }
+
+        return all;
+      }, []);
+    }
+
+    function applyColorFractions(widget, colorParts) {
+      const colors = colorParts.map(hexColor => parseInt(hexColor, 16));
+
+      const elements = ['color-picker-red', 'color-picker-blue', 'color-picker-green', 'color-picker-transparency'];
+
+      for (let i = 0; i < elements.length; i += 1) {
+        const elementClass = elements[i];
+        const color = colors[i];
+        const slider = widget.querySelector('.' + elementClass);
+
+        slider.value = color;
+      }
+    }
+
+    function applyColorToWidget(widget, color) {
+      const colorPicketPreview = widget.querySelector('.color-picker-preview');
+
+      widget.dataset.value = '#' + color;
+      colorPicketPreview.style.backgroundColor = '#' + color;
+    }
+
+    const RGB_R = 0;
+    const RGB_B = 1;
+    const RGB_G = 2;
+    const RGB_A = 3;
+
+    function handleColorSliderChange(event) {
+      const colorSlider = event.target;
+      const colorPicker = colorSlider.closest('.color-picker');
+      const colorPicketText = colorPicker.querySelector('.color-picker-text');
+      const color = colorPicker.dataset.value.slice(1);
+      const fractions = getColorFractions(color);
+
+      const sliderValue = +colorSlider.value;
+      const hexSliderValue = sliderValue.toString(16).padStart(2, '0');
+      const colorIndex = +colorSlider.dataset.color;
+
+      fractions[colorIndex] = hexSliderValue;
+      const value = fractions.join('')
+      colorPicketText.value = value;
+
+      applyColorToWidget(colorPicker, value);
+    }
+
+    function handleColorPickerTextChange(event) {
+      const colorPicketText = event.target;
+      const colorPicker = colorPicketText.closest('.color-picker');
+
+      event.stopPropagation();
+
+      if (colorPicketText.value.length !== 8) {
+        return;
+      }
+
+      const testParse16 = parseInt(colorPicketText.value, 16);
+
+      if (isNaN(testParse16)) {
+        return;
+      }
+
+      const color = colorPicketText.value;
+      const fractions = getColorFractions(color);
+
+      applyColorFractions(colorPicker, fractions);
+      applyColorToWidget(colorPicker, color);
+    }
+
+    for (const colorPicker of colorPickers) {
+      const color = colorPicker.dataset.value.slice(1);
+      const colorPickerText = colorPicker.querySelector('.color-picker-text');
+
+      colorPickerText.value = color;
+      const colorParts = getColorFractions(color);
+
+      applyColorFractions(colorPicker, colorParts);
+      applyColorToWidget(colorPicker, color);
+
+      colorPicker.addEventListener('input', handleColorSliderChange);
+      colorPickerText.addEventListener('input', handleColorPickerTextChange);
+    }
+  </script>
+</body>
+</html>
